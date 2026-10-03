@@ -48,10 +48,21 @@
     .btn:active {
       background: #00a8b3;
     }
+    #soundBtn {
+      margin-bottom: 10px;
+      padding: 10px 20px;
+      background: #1d2130;
+      color: #00f0ff;
+      border: 1px solid #00f0ff;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+  <button id="soundBtn">🎧 Music: OFF (Tap to Start Beat)</button>
   <canvas id="gameCanvas" width="400" height="500"></canvas>
 
   <div id="controls">
@@ -59,9 +70,14 @@
     <button class="btn" id="rightBtn">Right 👉</button>
   </div>
 
+  <!-- Cyberpunk / Synthwave Action Track -->
+  <audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=cyberpunk-2099-10701.mp3"></audio>
+
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+    const bgMusic = document.getElementById('bgMusic');
+    const soundBtn = document.getElementById('soundBtn');
 
     let player = { x: 180, y: 440, width: 40, height: 40, speed: 5 };
     let obstacles = [];
@@ -69,8 +85,36 @@
     let gameOver = false;
     let moveLeft = false;
     let moveRight = false;
+    let musicPlaying = false;
 
-    // Keyboard listeners
+    soundBtn.addEventListener('click', () => {
+      if (!musicPlaying) {
+        bgMusic.play();
+        bgMusic.volume = 0.5;
+        soundBtn.textContent = '🎧 Music: ON';
+        musicPlaying = true;
+      } else {
+        bgMusic.pause();
+        soundBtn.textContent = '🎧 Music: OFF';
+        musicPlaying = false;
+      }
+    });
+
+    function playExplosionSound() {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.5);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.5);
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft = true;
       if (e.key === 'ArrowRight' || e.key === 'd') moveRight = true;
@@ -81,7 +125,6 @@
       if (e.key === 'ArrowRight' || e.key === 'd') moveRight = false;
     });
 
-    // Touch button listeners
     const leftBtn = document.getElementById('leftBtn');
     const rightBtn = document.getElementById('rightBtn');
 
@@ -125,7 +168,6 @@
         let obs = obstacles[i];
         obs.y += obs.speed;
 
-        // Collision check
         if (
           player.x < obs.x + obs.width &&
           player.x + player.width > obs.x &&
@@ -133,6 +175,8 @@
           player.y + player.height > obs.y
         ) {
           gameOver = true;
+          playExplosionSound();
+          bgMusic.pause();
         }
       }
 
@@ -143,17 +187,14 @@
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Player
       ctx.fillStyle = '#00f0ff';
       ctx.fillRect(player.x, player.y, player.width, player.height);
 
-      // Obstacles
       ctx.fillStyle = '#ff0055';
       obstacles.forEach(obs => {
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
       });
 
-      // Score
       ctx.fillStyle = '#fff';
       ctx.font = '18px sans-serif';
       ctx.fillText('Score: ' + Math.floor(score / 10), 10, 25);
