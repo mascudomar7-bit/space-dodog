@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JSFiddle 5s9xkjm0</title>
+
+  <style>
+    
+  </style>
+
+  
+</head>
+<body>
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Dodge Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      color: #38bdf8;
+    }
+
+    p {
+      margin-bottom: 15px;
+      color: #94a3b8;
+    }
+
+    canvas {
+      background-color: #020617;
+      border: 2px solid #38bdf8;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🚀 Space Dodge</h1>
+  <p>Use <strong>Left & Right Arrow Keys</strong> or <strong>A / D</strong> to dodge falling asteroids!</p>
+  
+  <canvas id="gameCanvas" width="400" height="500"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Game Variables
+    let score = 0;
+    let gameOver = false;
+
+    // Player Object
+    const player = {
+      x: canvas.width / 2 - 15,
+      y: canvas.height - 40,
+      width: 30,
+      height: 30,
+      speed: 6,
+      dx: 0
+    };
+
+    // Asteroids Array
+    const asteroids = [];
+
+    // Keyboard Controls
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") player.dx = -player.speed;
+      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") player.dx = player.speed;
+      if (gameOver && e.key === " ") restartGame();
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A" ||
+          e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        player.dx = 0;
+      }
+    });
+
+    // Spawn an asteroid every 400ms
+    function spawnAsteroid() {
+      if (gameOver) return;
+      const size = Math.random() * 20 + 15; // Random size between 15 and 35
+      asteroids.push({
+        x: Math.random() * (canvas.width - size),
+        y: -size,
+        size: size,
+        speed: Math.random() * 3 + 2 // Speed between 2 and 5
+      });
+    }
+
+    setInterval(spawnAsteroid, 400);
+
+    // Update Game State
+    function update() {
+      if (gameOver) return;
+
+      // Move player and keep inside canvas bounds
+      player.x += player.dx;
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+      // Update Asteroids
+      for (let i = 0; i < asteroids.length; i++) {
+        let a = asteroids[i];
+        a.y += a.speed;
+
+        // Collision Check (AABB)
+        if (
+          player.x < a.x + a.size &&
+          player.x + player.width > a.x &&
+          player.y < a.y + a.size &&
+          player.y + player.height > a.y
+        ) {
+          gameOver = true;
+        }
+
+        // Increase score when asteroid passes bottom screen
+        if (a.y > canvas.height) {
+          asteroids.splice(i, 1);
+          score += 10;
+          i--;
+        }
+      }
+    }
+
+    // Draw Everything on Canvas
+    function draw() {
+      // Clear previous frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Player (Blue Spaceship)
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Draw Asteroids (Red Squares)
+      ctx.fillStyle = "#ef4444";
+      asteroids.forEach(a => {
+        ctx.fillRect(a.x, a.y, a.size, a.size);
+      });
+
+      // Draw Score
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "16px sans-serif";
+      ctx.fillText("Score: " + score, 15, 25);
+
+      // Draw Game Over Screen
+      if (gameOver) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#ef4444";
+        ctx.font = "bold 28px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 10);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "16px sans-serif";
+        ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 20);
+        ctx.fillText("Press Spacebar to Restart", canvas.width / 2, canvas.height / 2 + 50);
+        ctx.textAlign = "left"; // Reset alignment
+      }
+    }
+
+    // Main Game Loop
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Restart Function
+    function restartGame() {
+      score = 0;
+      asteroids.length = 0;
+      player.x = canvas.width / 2 - 15;
+      gameOver = false;
+    }
+
+    // Start loop
+    gameLoop();
+  </script>
+</body>
+</html>
+
+  <script>
+    
+  </script>
+</body>
+</html>
