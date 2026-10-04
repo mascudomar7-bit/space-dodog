@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Space Dodge Game</title>
+  <title>Space Dodge Ultra</title>
   <style>
     * {
       box-sizing: border-box;
@@ -11,9 +11,9 @@
       padding: 0;
     }
     body {
-      background: #0d0e15;
+      background: #090a0f;
       color: #fff;
-      font-family: sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -23,7 +23,7 @@
       overflow: hidden;
     }
     #mission-banner {
-      background: #161925;
+      background: rgba(22, 25, 37, 0.9);
       border: 1px solid #ffd700;
       color: #ffd700;
       padding: 6px 14px;
@@ -33,6 +33,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
     }
     #claimBtn {
       display: none;
@@ -65,6 +66,10 @@
       font-weight: bold;
       font-size: 13px;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+    .top-btn:active {
+      transform: scale(0.95);
     }
     #adBtn {
       background: #ff0055;
@@ -76,10 +81,10 @@
       position: relative;
     }
     canvas {
-      background: #161925;
+      background: #0d0e15;
       border: 2px solid #00f0ff;
       border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
       max-width: 95vw;
       max-height: 55vh;
       display: block;
@@ -90,7 +95,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(13, 14, 21, 0.85);
+      background: rgba(9, 10, 15, 0.9);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -99,15 +104,15 @@
       z-index: 10;
     }
     #startBtn {
-      background: #00f0ff;
-      color: #000;
+      background: linear-gradient(45deg, #00f0ff, #7000ff);
+      color: #fff;
       border: none;
-      padding: 15px 30px;
+      padding: 15px 35px;
       font-size: 22px;
       font-weight: bold;
       border-radius: 8px;
       cursor: pointer;
-      box-shadow: 0 0 15px #00f0ff;
+      box-shadow: 0 0 20px #00f0ff;
     }
     #shopModal {
       display: none;
@@ -162,18 +167,23 @@
     #controls {
       margin-top: 12px;
       display: flex;
-      gap: 15px;
+      gap: 10px;
     }
     .btn {
       background: #00f0ff;
       color: #000;
       border: none;
-      padding: 15px 35px;
-      font-size: 20px;
+      padding: 14px 24px;
+      font-size: 18px;
       font-weight: bold;
       border-radius: 8px;
       user-select: none;
       -webkit-user-select: none;
+    }
+    #fireBtn {
+      background: #ff0055;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
     }
   </style>
 </head>
@@ -188,20 +198,22 @@
     <button class="top-btn" id="soundBtn">🎧 Audio: OFF</button>
     <button class="top-btn" id="pauseBtn">⏸️ Pause</button>
     <button class="top-btn" id="shopBtn">🚀 Hangar</button>
-    <button class="top-btn" id="adBtn">📺 Watch Ad (+5 🪙)</button>
+    <button class="top-btn" id="adBtn">📺 Free Coins (+5 🪙)</button>
   </div>
 
   <div id="gameContainer">
     <canvas id="gameCanvas" width="400" height="500"></canvas>
     
     <div id="overlayScreen">
-      <h1 style="color: #00f0ff; margin-bottom: 10px;">SPACE DODGE</h1>
+      <h1 style="color: #00f0ff; margin-bottom: 5px; text-shadow: 0 0 10px #00f0ff;">SPACE DODGE</h1>
+      <p style="color: #a855f7; margin-bottom: 20px; font-size: 14px;">⚡ ULTRA EDITION</p>
       <button id="startBtn">START GAME</button>
     </div>
   </div>
 
   <div id="controls">
     <button class="btn" id="leftBtn">👈 Left</button>
+    <button class="btn" id="fireBtn">🔥 FIRE</button>
     <button class="btn" id="rightBtn">Right 👉</button>
   </div>
 
@@ -229,7 +241,6 @@
     const startBtn = document.getElementById('startBtn');
     const claimBtn = document.getElementById('claimBtn');
 
-    // Safe LocalStorage getters
     function getStoredInt(key, def) {
       try {
         const val = localStorage.getItem(key);
@@ -248,18 +259,38 @@
     let isPaused = false;
     let musicPlaying = false;
 
-    let player = { x: 180, y: 430, width: 36, height: 40, speed: 5, shipIndex: 0 };
+    let player = { x: 180, y: 420, width: 36, height: 40, speed: 6, shipIndex: 0 };
+    let bullets = [];
+    let enemyBullets = [];
     let obstacles = [];
     let coinItems = [];
     let powerups = [];
     let particles = [];
+    let stars = [];
+    let boss = null;
+
     let score = 0;
+    let combo = 0;
+    let comboTimer = 0;
     let moveLeft = false;
     let moveRight = false;
+    let isFiring = false;
+    let fireCooldown = 0;
 
     let hasShield = false;
     let magnetActive = false;
-    let magnetTimer = 0;
+    let hyperBoost = false;
+    let hyperTimer = 0;
+
+    // Starfield Background Setup
+    for (let i = 0; i < 60; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 0.5,
+        speed: Math.random() * 2 + 1
+      });
+    }
 
     // Mission System
     let currentMission = null;
@@ -290,7 +321,6 @@
       }
     });
 
-    // 20 Ship Definitions
     const shipCatalog = [
       { name: "Cyan Dart", price: 0, color: "#00f0ff", type: 0 },
       { name: "Crimson Viper", price: 10, color: "#ff0055", type: 1 },
@@ -360,7 +390,7 @@
       document.getElementById('shopCoins').textContent = coins;
     }
 
-    // Controls & Audio
+    // Audio & Button Handlers
     soundBtn.addEventListener('click', () => {
       if (!musicPlaying) {
         bgMusic.play().catch(() => {});
@@ -380,7 +410,7 @@
     });
 
     adBtn.addEventListener('click', () => {
-      alert("📺 Watching Ad... (+5 Coins added!)");
+      alert("📺 Free reward unlocked! (+5 Coins)");
       coins += 5;
       setStored('space_dodge_coins', coins);
       updateShopUI();
@@ -394,94 +424,85 @@
 
     function restartGame() {
       player.x = 180;
+      bullets = [];
+      enemyBullets = [];
       obstacles = [];
       coinItems = [];
       powerups = [];
       particles = [];
+      boss = null;
       score = 0;
+      combo = 0;
       hasShield = false;
       magnetActive = false;
+      hyperBoost = false;
       gameOver = false;
       isPaused = false;
       pauseBtn.textContent = '⏸️ Pause';
       if (musicPlaying) bgMusic.play().catch(() => {});
     }
 
-    // Input Handling
+    // Keyboard & Touch Setup
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft = true;
       if (e.key === 'ArrowRight' || e.key === 'd') moveRight = true;
+      if (e.key === ' ' || e.key === 'w') isFiring = true;
       if (gameOver && e.key === ' ') restartGame();
     });
     window.addEventListener('keyup', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft = false;
       if (e.key === 'ArrowRight' || e.key === 'd') moveRight = false;
+      if (e.key === ' ' || e.key === 'w') isFiring = false;
     });
 
+    const fireBtn = document.getElementById('fireBtn');
     const leftBtn = document.getElementById('leftBtn');
     const rightBtn = document.getElementById('rightBtn');
 
-    const startLeft = (e) => { e.preventDefault(); moveLeft = true; };
-    const stopLeft = (e) => { e.preventDefault(); moveLeft = false; };
-    const startRight = (e) => { e.preventDefault(); moveRight = true; };
-    const stopRight = (e) => { e.preventDefault(); moveRight = false; };
+    const bindTouch = (elem, startFn, stopFn) => {
+      elem.addEventListener('touchstart', (e) => { e.preventDefault(); startFn(); });
+      elem.addEventListener('touchend', (e) => { e.preventDefault(); stopFn(); });
+      elem.addEventListener('mousedown', startFn);
+      elem.addEventListener('mouseup', stopFn);
+    };
 
-    leftBtn.addEventListener('touchstart', startLeft);
-    leftBtn.addEventListener('touchend', stopLeft);
-    leftBtn.addEventListener('mousedown', startLeft);
-    leftBtn.addEventListener('mouseup', stopLeft);
-
-    rightBtn.addEventListener('touchstart', startRight);
-    rightBtn.addEventListener('touchend', stopRight);
-    rightBtn.addEventListener('mousedown', startRight);
-    rightBtn.addEventListener('mouseup', stopRight);
+    bindTouch(leftBtn, () => moveLeft = true, () => moveLeft = false);
+    bindTouch(rightBtn, () => moveRight = true, () => moveRight = false);
+    bindTouch(fireBtn, () => isFiring = true, () => isFiring = false);
 
     canvas.addEventListener('click', () => {
       if (gameOver) restartGame();
     });
 
-    // Drawing Vector Ships
-    function drawShip(x, y, shipIdx) {
-      const ship = shipCatalog[shipIdx] || shipCatalog[0];
-      ctx.save();
-      ctx.translate(x + 18, y + 20);
-
-      ctx.fillStyle = ship.color;
-      ctx.beginPath();
-      if (ship.type === 0) { // Dart
-        ctx.moveTo(0, -18);
-        ctx.lineTo(16, 16);
-        ctx.lineTo(0, 10);
-        ctx.lineTo(-16, 16);
-      } else if (ship.type === 1) { // Viper
-        ctx.moveTo(0, -20);
-        ctx.lineTo(18, 10);
-        ctx.lineTo(10, 18);
-        ctx.lineTo(0, 12);
-        ctx.lineTo(-10, 18);
-        ctx.lineTo(-18, 10);
-      } else { // Rocket
-        ctx.moveTo(0, -20);
-        ctx.lineTo(10, -5);
-        ctx.lineTo(14, 18);
-        ctx.lineTo(-14, 18);
-        ctx.lineTo(-10, -5);
+    function createExplosion(x, y, color, count = 12) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          life: 25,
+          color
+        });
       }
-      ctx.closePath();
-      ctx.fill();
-
-      // Cockpit Glow
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(0, -4, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
     }
 
     function spawnElements() {
       let diff = Math.min(score / 3000, 1.5);
-      if (Math.random() < 0.03 + diff * 0.02) {
+      
+      // Boss Spawn Condition
+      if (!boss && Math.floor(score / 10) > 0 && Math.floor(score / 10) % 500 === 0) {
+        boss = {
+          x: canvas.width / 2 - 40,
+          y: -80,
+          width: 80,
+          height: 50,
+          hp: 30,
+          maxHp: 30,
+          direction: 1
+        };
+      }
+
+      if (!boss && Math.random() < 0.035 + diff * 0.02) {
         let size = Math.random() * 25 + 20;
         obstacles.push({
           x: Math.random() * (canvas.width - size),
@@ -491,15 +512,16 @@
           speed: Math.random() * 3 + 2.5 + diff * 2
         });
       }
-      if (Math.random() < 0.015) {
+      if (Math.random() < 0.018) {
         coinItems.push({ x: Math.random() * (canvas.width - 20), y: -20, size: 16, speed: 2.5 });
       }
-      if (Math.random() < 0.003) {
+      if (Math.random() < 0.004) {
+        const types = ['shield', 'magnet', 'hyper'];
         powerups.push({
           x: Math.random() * (canvas.width - 24),
           y: -24,
           size: 20,
-          type: Math.random() < 0.5 ? 'shield' : 'magnet',
+          type: types[Math.floor(Math.random() * types.length)],
           speed: 2
         });
       }
@@ -521,29 +543,114 @@
     function update() {
       if (!gameStarted || gameOver || isPaused) return;
 
+      // Background Star Motion
+      stars.forEach(star => {
+        star.y += hyperBoost ? star.speed * 4 : star.speed;
+        if (star.y > canvas.height) star.y = 0;
+      });
+
+      // Player Movement
       if (moveLeft && player.x > 0) player.x -= player.speed;
       if (moveRight && player.x < canvas.width - player.width) player.x += player.speed;
+
+      // Shooting Logic
+      fireCooldown--;
+      if (isFiring && fireCooldown <= 0) {
+        bullets.push({ x: player.x + 18, y: player.y, speed: 10 });
+        if (hyperBoost) {
+          bullets.push({ x: player.x + 6, y: player.y, speed: 10 });
+          bullets.push({ x: player.x + 30, y: player.y, speed: 10 });
+        }
+        fireCooldown = hyperBoost ? 6 : 12;
+      }
+
+      // Update Bullets
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= bullets[i].speed;
+        if (bullets[i].y < 0) bullets.splice(i, 1);
+      }
+
+      // Update Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].x += particles[i].vx;
+        particles[i].y += particles[i].vy;
+        particles[i].life--;
+        if (particles[i].life <= 0) particles.splice(i, 1);
+      }
 
       spawnElements();
       updateMission('time', 1 / 60);
       updateMission('score', 1 / 10);
 
-      // Coins
+      // Boss Logic
+      if (boss) {
+        if (boss.y < 40) boss.y += 1;
+        boss.x += boss.direction * 2;
+        if (boss.x < 10 || boss.x > canvas.width - boss.width - 10) boss.direction *= -1;
+
+        if (Math.random() < 0.03) {
+          enemyBullets.push({ x: boss.x + 20, y: boss.y + 50, speed: 4 });
+          enemyBullets.push({ x: boss.x + 60, y: boss.y + 50, speed: 4 });
+        }
+
+        // Bullet hitting Boss
+        for (let b = bullets.length - 1; b >= 0; b--) {
+          let bul = bullets[b];
+          if (bul.x > boss.x && bul.x < boss.x + boss.width && bul.y > boss.y && bul.y < boss.y + boss.height) {
+            boss.hp--;
+            createExplosion(bul.x, bul.y, '#ffd700', 5);
+            bullets.splice(b, 1);
+            if (boss.hp <= 0) {
+              createExplosion(boss.x + 40, boss.y + 25, '#ff0055', 40);
+              coins += 50;
+              score += 1000;
+              boss = null;
+              break;
+            }
+          }
+        }
+      }
+
+      // Enemy Bullets
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        let eb = enemyBullets[i];
+        eb.y += eb.speed;
+        if (eb.x > player.x && eb.x < player.x + player.width && eb.y > player.y && eb.y < player.y + player.height) {
+          if (!hasShield && !hyperBoost) gameOver = true;
+          enemyBullets.splice(i, 1);
+        } else if (eb.y > canvas.height) {
+          enemyBullets.splice(i, 1);
+        }
+      }
+
+      // Bullets hitting Obstacles
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        let obs = obstacles[i];
+        for (let b = bullets.length - 1; b >= 0; b--) {
+          let bul = bullets[b];
+          if (bul.x > obs.x && bul.x < obs.x + obs.width && bul.y > obs.y && bul.y < obs.y + obs.height) {
+            createExplosion(obs.x + obs.width / 2, obs.y + obs.height / 2, '#ff0055');
+            obstacles.splice(i, 1);
+            bullets.splice(b, 1);
+            score += 50;
+            combo++;
+            comboTimer = 120;
+            break;
+          }
+        }
+      }
+
+      // Coins Collection
       for (let i = coinItems.length - 1; i >= 0; i--) {
         let c = coinItems[i];
         if (magnetActive) {
-          c.x += ((player.x + 18) - c.x) * 0.08;
-          c.y += ((player.y + 20) - c.y) * 0.08;
+          c.x += ((player.x + 18) - c.x) * 0.1;
+          c.y += ((player.y + 20) - c.y) * 0.1;
         } else {
           c.y += c.speed;
         }
 
-        if (
-          player.x < c.x + c.size &&
-          player.x + player.width > c.x &&
-          player.y < c.y + c.size &&
-          player.y + player.height > c.y
-        ) {
+        if (player.x < c.x + c.size && player.x + player.width > c.x && player.y < c.y + c.size && player.y + player.height > c.y) {
           coins++;
           updateMission('coins', 1);
           setStored('space_dodge_coins', coins);
@@ -553,37 +660,34 @@
         if (c.y > canvas.height) coinItems.splice(i, 1);
       }
 
-      // Powerups
+      // Powerups Pickups
       for (let i = powerups.length - 1; i >= 0; i--) {
         let p = powerups[i];
         p.y += p.speed;
-        if (
-          player.x < p.x + p.size &&
-          player.x + player.width > p.x &&
-          player.y < p.y + p.size &&
-          player.y + player.height > p.y
-        ) {
+        if (player.x < p.x + p.size && player.x + player.width > p.x && player.y < p.y + p.size && player.y + player.height > p.y) {
           if (p.type === 'shield') hasShield = true;
-          if (p.type === 'magnet') { magnetActive = true; magnetTimer = 300; }
+          if (p.type === 'magnet') magnetActive = true;
+          if (p.type === 'hyper') { hyperBoost = true; hyperTimer = 300; }
           powerups.splice(i, 1);
           continue;
         }
         if (p.y > canvas.height) powerups.splice(i, 1);
       }
 
-      // Obstacles
+      if (hyperBoost) {
+        hyperTimer--;
+        if (hyperTimer <= 0) hyperBoost = false;
+      }
+
+      // Obstacle Collision
       for (let i = obstacles.length - 1; i >= 0; i--) {
         let obs = obstacles[i];
         obs.y += obs.speed;
 
-        if (
-          player.x < obs.x + obs.width &&
-          player.x + player.width > obs.x &&
-          player.y < obs.y + obs.height &&
-          player.y + player.height > obs.y
-        ) {
-          if (hasShield) {
+        if (player.x < obs.x + obs.width && player.x + player.width > obs.x && player.y < obs.y + obs.height && player.y + player.height > obs.y) {
+          if (hyperBoost || hasShield) {
             hasShield = false;
+            createExplosion(obs.x + obs.width / 2, obs.y + obs.height / 2, '#00f0ff');
             obstacles.splice(i, 1);
             continue;
           }
@@ -600,8 +704,38 @@
       score++;
     }
 
+    function drawShip(x, y, shipIdx) {
+      const ship = shipCatalog[shipIdx] || shipCatalog[0];
+      ctx.save();
+      ctx.translate(x + 18, y + 20);
+
+      ctx.fillStyle = ship.color;
+      ctx.beginPath();
+      if (ship.type === 0) {
+        ctx.moveTo(0, -18); ctx.lineTo(16, 16); ctx.lineTo(0, 10); ctx.lineTo(-16, 16);
+      } else if (ship.type === 1) {
+        ctx.moveTo(0, -20); ctx.lineTo(18, 10); ctx.lineTo(10, 18); ctx.lineTo(0, 12); ctx.lineTo(-10, 18); ctx.lineTo(-18, 10);
+      } else {
+        ctx.moveTo(0, -20); ctx.lineTo(10, -5); ctx.lineTo(14, 18); ctx.lineTo(-14, 18); ctx.lineTo(-10, -5);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // Thruster Flare
+      ctx.fillStyle = hyperBoost ? '#ffd700' : '#ff0055';
+      ctx.beginPath();
+      ctx.moveTo(-6, 14); ctx.lineTo(0, 24 + Math.random() * 6); ctx.lineTo(6, 14);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Starfield
+      ctx.fillStyle = '#fff';
+      stars.forEach(s => ctx.fillRect(s.x, s.y, s.size, s.size));
 
       if (gameStarted) {
         // Player Ship
@@ -615,11 +749,34 @@
           ctx.stroke();
         }
 
-        // Obstacles (Red Alien Ships)
+        // Bullets
+        ctx.fillStyle = '#00f0ff';
+        bullets.forEach(b => ctx.fillRect(b.x - 2, b.y, 4, 10));
+
+        // Enemy Bullets
         ctx.fillStyle = '#ff0055';
-        obstacles.forEach(obs => {
-          ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        enemyBullets.forEach(eb => ctx.fillRect(eb.x - 3, eb.y, 6, 8));
+
+        // Particles
+        particles.forEach(p => {
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, 3, 3);
         });
+
+        // Boss
+        if (boss) {
+          ctx.fillStyle = '#ff0055';
+          ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+          // Boss Health Bar
+          ctx.fillStyle = '#333';
+          ctx.fillRect(boss.x, boss.y - 10, boss.width, 6);
+          ctx.fillStyle = '#00f0ff';
+          ctx.fillRect(boss.x, boss.y - 10, (boss.hp / boss.maxHp) * boss.width, 6);
+        }
+
+        // Obstacles
+        ctx.fillStyle = '#e11d48';
+        obstacles.forEach(obs => ctx.fillRect(obs.x, obs.y, obs.width, obs.height));
 
         // Coins
         ctx.fillStyle = '#ffd700';
@@ -631,12 +788,15 @@
 
         // Power-ups
         powerups.forEach(p => {
-          ctx.fillStyle = p.type === 'shield' ? '#00f0ff' : '#a855f7';
+          ctx.fillStyle = '#fff';
           ctx.font = '16px sans-serif';
-          ctx.fillText(p.type === 'shield' ? '🛡️' : '🧲', p.x, p.y + 16);
+          let icon = '🛡️️';
+          if (p.type === 'magnet') icon = '🧲';
+          if (p.type === 'hyper') icon = '⚡';
+          ctx.fillText(icon, p.x, p.y + 16);
         });
 
-        // HUD Stats
+        // HUD Text
         ctx.fillStyle = '#fff';
         ctx.font = '14px sans-serif';
         ctx.fillText('Score: ' + Math.floor(score / 10), 10, 22);
@@ -646,12 +806,12 @@
         ctx.fillText('Coins: ' + coins + ' 🪙', canvas.width - 110, 22);
 
         if (gameOver) {
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.fillStyle = '#ff0055';
           ctx.font = '30px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+          ctx.fillText('MISSION FAILED', canvas.width / 2, canvas.height / 2 - 20);
           ctx.fillStyle = '#fff';
           ctx.font = '16px sans-serif';
           ctx.fillText('Score: ' + Math.floor(score / 10) + ' | Best: ' + highScore, canvas.width / 2, canvas.height / 2 + 10);
