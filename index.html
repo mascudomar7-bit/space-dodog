@@ -11,66 +11,200 @@
       padding: 0;
     }
     body {
-      background: #0d0e15;
+      background: #090a10;
       color: #fff;
-      font-family: sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
       touch-action: manipulation;
+      overflow: hidden;
+    }
+    #game-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #ui-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: center;
+    }
+    .top-btn {
+      padding: 8px 12px;
+      background: #151828;
+      color: #00f0ff;
+      border: 1px solid #00f0ff;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .top-btn:hover {
+      background: #00f0ff;
+      color: #000;
+      box-shadow: 0 0 10px #00f0ff;
+    }
+    #adBtn {
+      background: #ff0055;
+      color: #fff;
+      border: none;
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+    }
+    #adBtn:hover {
+      background: #ff3377;
+      box-shadow: 0 0 15px rgba(255, 0, 85, 0.8);
+      color: #fff;
     }
     canvas {
-      background: #161925;
+      background: #0d0f1b;
       border: 2px solid #00f0ff;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
       max-width: 95vw;
-      max-height: 60vh;
+      max-height: 55vh;
+      display: block;
     }
     #controls {
-      margin-top: 15px;
+      margin-top: 12px;
       display: flex;
-      gap: 15px;
+      gap: 20px;
     }
     .btn {
+      background: linear-gradient(135deg, #00f0ff, #0088ff);
+      color: #000;
+      border: none;
+      padding: 14px 38px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 10px;
+      user-select: none;
+      -webkit-user-select: none;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+      cursor: pointer;
+    }
+    .btn:active {
+      transform: scale(0.95);
+      background: #00a8b3;
+    }
+    #mission-banner {
+      background: #121422;
+      border: 1px solid #ffd700;
+      color: #ffd700;
+      padding: 6px 14px;
+      font-size: 13px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+    }
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(13, 15, 27, 0.96);
+      border: 2px solid #00f0ff;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      width: 340px;
+      max-height: 80vh;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .modal::-webkit-scrollbar {
+      width: 6px;
+    }
+    .modal::-webkit-scrollbar-thumb {
+      background: #00f0ff;
+      border-radius: 4px;
+    }
+    .shop-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .shop-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #181b2e;
+      border: 1px solid #282c47;
+      border-radius: 8px;
+    }
+    .shop-item-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .shop-item-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+      text-align: left;
+    }
+    .shop-item-price {
+      font-size: 11px;
+      color: #ffd700;
+    }
+    .buy-btn {
+      padding: 6px 12px;
       background: #00f0ff;
       color: #000;
       border: none;
-      padding: 15px 35px;
-      font-size: 20px;
-      font-weight: bold;
-      border-radius: 8px;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    .btn:active {
-      background: #00a8b3;
-    }
-    #soundBtn {
-      margin-bottom: 10px;
-      padding: 10px 20px;
-      background: #1d2130;
-      color: #00f0ff;
-      border: 1px solid #00f0ff;
       border-radius: 5px;
+      font-size: 12px;
       font-weight: bold;
       cursor: pointer;
+    }
+    .buy-btn:disabled {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
 
-  <button id="soundBtn">🎧 Music: OFF (Tap to Start Beat)</button>
-  <canvas id="gameCanvas" width="400" height="500"></canvas>
+  <div id="game-container">
+    <div id="mission-banner">🎯 Mission: <span id="missionText">Collect 5 Coins (+10 🪙 Reward)</span></div>
 
-  <div id="controls">
-    <button class="btn" id="leftBtn">👈 Left</button>
-    <button class="btn" id="rightBtn">Right 👉</button>
+    <div id="ui-bar">
+      <button class="top-btn" id="soundBtn">🎧 Audio: OFF</button>
+      <button class="top-btn" id="pauseBtn">⏸️ Pause</button>
+      <button class="top-btn" id="shopBtn">🛒 Hangar (20 Ships)</button>
+      <button class="top-btn" id="adBtn">📺 Watch Ad (+5 🪙)</button>
+    </div>
+
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+
+    <div id="controls">
+      <button class="btn" id="leftBtn">👈 Left</button>
+      <button class="btn" id="rightBtn">Right 👉</button>
+    </div>
+
+    <!-- Shop Modal Window -->
+    <div id="shopModal" class="modal">
+      <h2 style="color: #00f0ff; font-size: 20px; margin-bottom: 5px;">🛸 Starship Hangar</h2>
+      <p style="margin-bottom: 12px; color: #ffd700; font-weight: bold;">Coins: <span id="shopCoins">0</span> 🪙</p>
+      
+      <div id="shopList" class="shop-grid"></div>
+
+      <button class="top-btn" style="margin-top: 15px; width: 100%; padding: 10px;" onclick="toggleShop()">Close Hangar</button>
+    </div>
   </div>
 
-  <!-- Cyberpunk / Synthwave Action Track -->
   <audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=cyberpunk-2099-10701.mp3"></audio>
 
   <script>
@@ -78,46 +212,291 @@
     const ctx = canvas.getContext('2d');
     const bgMusic = document.getElementById('bgMusic');
     const soundBtn = document.getElementById('soundBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const adBtn = document.getElementById('adBtn');
+    const shopModal = document.getElementById('shopModal');
 
-    let player = { x: 180, y: 440, width: 40, height: 40, speed: 5 };
+    // 20 Ships Catalog with distinct styles and prices
+    const SHIP_CATALOG = [
+      { id: 0, name: "Vector Scout", price: 0, color: "#00f0ff", type: "scout" },
+      { id: 1, name: "Crimson Dart", price: 10, color: "#ff2244", type: "dart" },
+      { id: 2, name: "Emerald Viper", price: 25, color: "#00ff66", type: "viper" },
+      { id: 3, name: "Solar Flare", price: 40, color: "#ffaa00", type: "flare" },
+      { id: 4, name: "Cyber Spectre", price: 60, color: "#a855f7", type: "spectre" },
+      { id: 5, name: "Neon Valkyrie", price: 80, color: "#ff00cc", type: "valkyrie" },
+      { id: 6, name: "Plasma Cruiser", price: 100, color: "#00aaff", type: "cruiser" },
+      { id: 7, name: "Shadow Blade", price: 130, color: "#8899ac", type: "blade" },
+      { id: 8, name: "Hyperion Stinger", price: 160, color: "#ffe600", type: "stinger" },
+      { id: 9, name: "Void Raven", price: 200, color: "#6600cc", type: "raven" },
+      { id: 10, name: "Nebula Interceptor", price: 250, color: "#00ffcc", type: "interceptor" },
+      { id: 11, name: "Apex Predator", price: 300, color: "#ff3300", type: "predator" },
+      { id: 12, name: "Titan Crusher", price: 350, color: "#33bbff", type: "crusher" },
+      { id: 13, name: "Quantum Tempest", price: 400, color: "#e600ff", type: "tempest" },
+      { id: 14, name: "Supernova Falcon", price: 480, color: "#ff9900", type: "falcon" },
+      { id: 15, name: "Astra Destroyer", price: 550, color: "#00ff99", type: "destroyer" },
+      { id: 16, name: "Vortex Dreadnought", price: 650, color: "#cc00ff", type: "dreadnought" },
+      { id: 17, name: "Cosmic Sentinel", price: 750, color: "#00ffff", type: "sentinel" },
+      { id: 18, name: "Obsidian Reaper", price: 880, color: "#ff0255", type: "reaper" },
+      { id: 19, name: "Golden Phoenix", price: 1000, color: "#ffd700", type: "phoenix" }
+    ];
+
+    // State Variables
+    let player = { x: 180, y: 420, width: 36, height: 42, speed: 5.5, skinId: 0, color: '#00f0ff' };
     let obstacles = [];
+    let coinItems = [];
+    let powerups = [];
+    let particles = [];
+    let stars = [];
+
     let score = 0;
+    let highScore = parseInt(localStorage.getItem('space_dodge_highscore')) || 0;
+    let coins = parseInt(localStorage.getItem('space_dodge_coins')) || 0;
+    let ownedSkins = JSON.parse(localStorage.getItem('space_dodge_owned')) || [0];
+
+    let gameStarted = false;
     let gameOver = false;
+    let isPaused = false;
     let moveLeft = false;
     let moveRight = false;
     let musicPlaying = false;
+
+    // Power-ups state
+    let hasShield = false;
+    let magnetActive = false;
+    let magnetTimer = 0;
+
+    // Mission State
+    let missionCoinsCollected = 0;
+    let missionCompleted = false;
+
+    // Create background starfield
+    for (let i = 0; i < 50; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 0.5,
+        speed: Math.random() * 1.5 + 0.5
+      });
+    }
+
+    function playCoinSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } catch (e) {}
+    }
+
+    function playExplosionSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(25, audioCtx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+      } catch (e) {}
+    }
 
     soundBtn.addEventListener('click', () => {
       if (!musicPlaying) {
         bgMusic.play();
         bgMusic.volume = 0.5;
-        soundBtn.textContent = '🎧 Music: ON';
+        soundBtn.textContent = '🎧 Audio: ON';
         musicPlaying = true;
       } else {
         bgMusic.pause();
-        soundBtn.textContent = '🎧 Music: OFF';
+        soundBtn.textContent = '🎧 Audio: OFF';
         musicPlaying = false;
       }
     });
 
-    function playExplosionSound() {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.5);
-      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.5);
+    pauseBtn.addEventListener('click', () => {
+      if (!gameStarted || gameOver) return;
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? '▶ Resume' : '⏸️ Pause';
+    });
+
+    adBtn.addEventListener('click', () => {
+      alert("📺 Reward Ad Watched! (+5 Coins added!)");
+      coins += 5;
+      saveData();
+      updateShopUI();
+    });
+
+    function toggleShop() {
+      const isVisible = shopModal.style.display === 'block';
+      shopModal.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) renderShopItems();
+    }
+    document.getElementById('shopBtn').addEventListener('click', toggleShop);
+
+    function renderShopItems() {
+      const list = document.getElementById('shopList');
+      document.getElementById('shopCoins').textContent = coins;
+      list.innerHTML = '';
+
+      SHIP_CATALOG.forEach(ship => {
+        const isOwned = ownedSkins.includes(ship.id);
+        const isEquipped = player.skinId === ship.id;
+
+        const item = document.createElement('div');
+        item.className = 'shop-item';
+        item.innerHTML = `
+          <div class="shop-item-info">
+            <div style="width: 20px; height: 20px; background: ${ship.color}; border-radius: 4px; box-shadow: 0 0 8px ${ship.color};"></div>
+            <div>
+              <div class="shop-item-title">${ship.name}</div>
+              <div class="shop-item-price">${isOwned ? 'Owned' : ship.price + ' 🪙'}</div>
+            </div>
+          </div>
+          <button class="buy-btn" ${isEquipped ? 'disabled' : ''} id="ship-btn-${ship.id}">
+            ${isEquipped ? 'Equipped' : (isOwned ? 'Equip' : 'Buy')}
+          </button>
+        `;
+        list.appendChild(item);
+
+        document.getElementById(`ship-btn-${ship.id}`).onclick = () => handleShipAction(ship);
+      });
     }
 
+    function handleShipAction(ship) {
+      if (ownedSkins.includes(ship.id)) {
+        player.skinId = ship.id;
+        player.color = ship.color;
+        renderShopItems();
+      } else if (coins >= ship.price) {
+        coins -= ship.price;
+        ownedSkins.push(ship.id);
+        player.skinId = ship.id;
+        player.color = ship.color;
+        saveData();
+        renderShopItems();
+      } else {
+        alert("Not enough coins! Collect more in space or watch an ad.");
+      }
+    }
+
+    function updateShopUI() {
+      document.getElementById('shopCoins').textContent = coins;
+    }
+
+    function saveData() {
+      localStorage.setItem('space_dodge_highscore', highScore);
+      localStorage.setItem('space_dodge_coins', coins);
+      localStorage.setItem('space_dodge_owned', JSON.stringify(ownedSkins));
+    }
+
+    function drawDetailedSpaceship(x, y, width, height, color, skinId, isEnemy = false) {
+      ctx.save();
+      ctx.translate(x + width / 2, y + height / 2);
+
+      if (isEnemy) {
+        ctx.rotate(Math.PI); // Rotate enemy ships downward
+      }
+
+      const w = width;
+      const h = height;
+
+      // Glow Effect
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+
+      // Draw Main Fuselage
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, -h / 2); // Nose
+      ctx.lineTo(w / 3, -h / 6);
+      ctx.lineTo(w / 2, h / 3); // Right Wingtip
+      ctx.lineTo(w / 4, h / 2);
+      ctx.lineTo(w / 6, h / 3);
+      ctx.lineTo(-w / 6, h / 3);
+      ctx.lineTo(-w / 4, h / 2);
+      ctx.lineTo(-w / 2, h / 3); // Left Wingtip
+      ctx.lineTo(-w / 3, -h / 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // Wing Accents
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(0, -h / 3);
+      ctx.lineTo(w / 6, 0);
+      ctx.lineTo(-w / 6, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      // Cockpit
+      ctx.fillStyle = isEnemy ? '#ff0033' : '#00ffff';
+      ctx.beginPath();
+      ctx.ellipse(0, -h / 8, w / 7, h / 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thruster Glow
+      if (!isEnemy) {
+        ctx.fillStyle = '#ffaa00';
+        ctx.beginPath();
+        ctx.moveTo(-w / 6, h / 3);
+        ctx.lineTo(0, h / 2 + Math.random() * 8);
+        ctx.lineTo(w / 6, h / 3);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function createParticles(x, y, color, count = 10) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          color: color,
+          size: Math.random() * 4 + 2,
+          life: 20
+        });
+      }
+    }
+
+    function startGame() {
+      gameStarted = true;
+      gameOver = false;
+      isPaused = false;
+      score = 0;
+      player.x = 180;
+      obstacles = [];
+      coinItems = [];
+      powerups = [];
+      particles = [];
+      hasShield = false;
+      magnetActive = false;
+      pauseBtn.textContent = '⏸️ Pause';
+      if (musicPlaying) bgMusic.play();
+    }
+
+    // Key listeners
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft = true;
       if (e.key === 'ArrowRight' || e.key === 'd') moveRight = true;
+      if (!gameStarted && (e.key === ' ' || e.key === 'Enter')) startGame();
+      if (gameOver && (e.key === ' ' || e.key === 'Enter')) startGame();
     });
 
     window.addEventListener('keyup', (e) => {
@@ -125,6 +504,7 @@
       if (e.key === 'ArrowRight' || e.key === 'd') moveRight = false;
     });
 
+    // Touch Controls
     const leftBtn = document.getElementById('leftBtn');
     const rightBtn = document.getElementById('rightBtn');
 
@@ -143,28 +523,147 @@
     rightBtn.addEventListener('mousedown', startRight);
     rightBtn.addEventListener('mouseup', stopRight);
 
-    function spawnObstacle() {
-      if (Math.random() < 0.03) {
-        let size = Math.random() * 30 + 20;
+    canvas.addEventListener('click', (e) => {
+      if (!gameStarted || gameOver) {
+        startGame();
+      }
+    });
+
+    function spawnElements() {
+      let difficultyRatio = Math.min(score / 3000, 1.5);
+
+      // Enemy Spaceships
+      if (Math.random() < 0.03 + difficultyRatio * 0.02) {
+        let size = Math.random() * 10 + 32;
         obstacles.push({
           x: Math.random() * (canvas.width - size),
           y: -size,
           width: size,
-          height: size,
-          speed: Math.random() * 3 + 2
+          height: size + 6,
+          color: '#ff2255',
+          speed: Math.random() * 3 + 2.5 + difficultyRatio * 2
+        });
+      }
+
+      // Collectible Coins on track
+      if (Math.random() < 0.025) {
+        coinItems.push({
+          x: Math.random() * (canvas.width - 24) + 12,
+          y: -20,
+          size: 16,
+          speed: 2.2
+        });
+      }
+
+      // Power-ups
+      if (Math.random() < 0.003) {
+        powerups.push({
+          x: Math.random() * (canvas.width - 24),
+          y: -24,
+          size: 22,
+          type: Math.random() < 0.5 ? 'shield' : 'magnet',
+          speed: 2
         });
       }
     }
 
     function update() {
-      if (gameOver) return;
+      // Move background stars always
+      stars.forEach(s => {
+        s.y += s.speed;
+        if (s.y > canvas.height) s.y = 0;
+      });
+
+      if (!gameStarted || gameOver || isPaused) return;
 
       if (moveLeft && player.x > 0) player.x -= player.speed;
       if (moveRight && player.x < canvas.width - player.width) player.x += player.speed;
 
-      spawnObstacle();
+      // Thruster Trail Particles
+      particles.push({
+        x: player.x + player.width / 2 + (Math.random() - 0.5) * 6,
+        y: player.y + player.height - 4,
+        vx: (Math.random() - 0.5) * 2,
+        vy: Math.random() * 2 + 2,
+        color: player.color,
+        size: Math.random() * 3 + 1,
+        life: 14
+      });
 
-      for (let i = 0; i < obstacles.length; i++) {
+      spawnElements();
+
+      // Magnet Logic
+      if (magnetActive) {
+        magnetTimer--;
+        if (magnetTimer <= 0) magnetActive = false;
+      }
+
+      // Update Coins
+      for (let i = coinItems.length - 1; i >= 0; i--) {
+        let c = coinItems[i];
+
+        if (magnetActive) {
+          let dx = (player.x + player.width / 2) - c.x;
+          let dy = (player.y + player.height / 2) - c.y;
+          c.x += dx * 0.09;
+          c.y += dy * 0.09;
+        } else {
+          c.y += c.speed;
+        }
+
+        // Coin Collision
+        if (
+          player.x < c.x + c.size &&
+          player.x + player.width > c.x - c.size &&
+          player.y < c.y + c.size &&
+          player.y + player.height > c.y - c.size
+        ) {
+          coins++;
+          missionCoinsCollected++;
+          playCoinSound();
+          createParticles(c.x, c.y, '#ffd700', 10);
+          coinItems.splice(i, 1);
+
+          if (missionCoinsCollected >= 5 && !missionCompleted) {
+            missionCompleted = true;
+            coins += 10;
+            document.getElementById('missionText').textContent = "COMPLETED! (+10 🪙 Reward)";
+          }
+          saveData();
+          continue;
+        }
+
+        if (c.y > canvas.height) coinItems.splice(i, 1);
+      }
+
+      // Update Power-ups
+      for (let i = powerups.length - 1; i >= 0; i--) {
+        let p = powerups[i];
+        p.y += p.speed;
+
+        if (
+          player.x < p.x + p.size &&
+          player.x + player.width > p.x &&
+          player.y < p.y + p.size &&
+          player.y + player.height > p.y
+        ) {
+          if (p.type === 'shield') {
+            hasShield = true;
+            createParticles(p.x, p.y, '#00f0ff', 12);
+          } else if (p.type === 'magnet') {
+            magnetActive = true;
+            magnetTimer = 300;
+            createParticles(p.x, p.y, '#a855f7', 12);
+          }
+          powerups.splice(i, 1);
+          continue;
+        }
+
+        if (p.y > canvas.height) powerups.splice(i, 1);
+      }
+
+      // Update Obstacle Ships
+      for (let i = obstacles.length - 1; i >= 0; i--) {
         let obs = obstacles[i];
         obs.y += obs.speed;
 
@@ -174,44 +673,182 @@
           player.y < obs.y + obs.height &&
           player.y + player.height > obs.y
         ) {
+          if (hasShield) {
+            hasShield = false;
+            createParticles(obs.x, obs.y, '#00f0ff', 18);
+            obstacles.splice(i, 1);
+            continue;
+          }
+
           gameOver = true;
+          createParticles(player.x + 18, player.y + 18, '#ff0055', 30);
           playExplosionSound();
           bgMusic.pause();
+
+          if (score > highScore) {
+            highScore = Math.floor(score / 10);
+            saveData();
+          }
         }
+
+        if (obs.y > canvas.height) obstacles.splice(i, 1);
       }
 
-      obstacles = obstacles.filter(obs => obs.y < canvas.height);
+      // Update Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
       score++;
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = '#00f0ff';
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-
-      ctx.fillStyle = '#ff0055';
-      obstacles.forEach(obs => {
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+      // Starfield Background
+      ctx.fillStyle = '#ffffff';
+      stars.forEach(s => {
+        ctx.fillRect(s.x, s.y, s.size, s.size);
       });
 
-      ctx.fillStyle = '#fff';
-      ctx.font = '18px sans-serif';
-      ctx.fillText('Score: ' + Math.floor(score / 10), 10, 25);
+      // Particles
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
 
-      if (gameOver) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ff0055';
-        ctx.font = '30px sans-serif';
+      // Render Floating Coins
+      coinItems.forEach(c => {
+        ctx.save();
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2);
+        ctx.fillText('🪙', c.x, c.y + 3);
+        ctx.restore();
+      });
+
+      // Render Power-ups
+      powerups.forEach(p => {
+        ctx.font = '18px sans-serif';
+        ctx.fillText(p.type === 'shield' ? '🛡️' : '🧲', p.x, p.y + 18);
+      });
+
+      // Render Enemies
+      obstacles.forEach(obs => {
+        drawDetailedSpaceship(obs.x, obs.y, obs.width, obs.height, obs.color, 0, true);
+      });
+
+      // Render Player Ship
+      if (!gameOver) {
+        drawDetailedSpaceship(player.x, player.y, player.width, player.height, player.color, player.skinId, false);
+      }
+
+      // Shield Aura
+      if (hasShield) {
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(player.x + player.width / 2, player.y + player.height / 2, 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // HUD Stats
+      ctx.fillStyle = '#fff';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('Score: ' + Math.floor(score / 10), 12, 24);
+      ctx.fillText('Best: ' + highScore, 12, 42);
+
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText('Coins: ' + coins + ' 🪙', canvas.width - 110, 24);
+
+      if (magnetActive) {
+        ctx.fillStyle = '#a855f7';
+        ctx.fillText('🧲 Magnet Active!', canvas.width - 130, 42);
+      }
+
+      // Start Overlay Screen
+      if (!gameStarted) {
+        ctx.fillStyle = 'rgba(9, 10, 16, 0.88)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SPACE DODGE', canvas.width / 2, canvas.height / 2 - 50);
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '15px sans-serif';
+        ctx.fillText('Dodge enemy cruisers & collect coins!', canvas.width / 2, canvas.height / 2 - 15);
+
+        // Start Button UI
+        ctx.fillStyle = '#00f0ff';
+        ctx.beginPath();
+        ctx.roundRect(canvas.width / 2 - 80, canvas.height / 2 + 20, 160, 45, 10);
+        ctx.fill();
+
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('START GAME', canvas.width / 2, canvas.height / 2 + 48);
+
+        ctx.textAlign = 'left';
+      }
+
+      // Paused Screen Overlay
+      if (isPaused && !gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 28px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME PAUSED', canvas.width / 2, canvas.height / 2);
+        ctx.textAlign = 'left';
+      }
+
+      // Game Over Screen Overlay
+      if (gameOver) {
+        ctx.fillStyle = 'rgba(9, 10, 16, 0.9)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ff0055';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
+
         ctx.fillStyle = '#fff';
         ctx.font = '16px sans-serif';
-        ctx.fillText('Refresh page to restart', canvas.width / 2, canvas.height / 2 + 40);
+        ctx.fillText('Final Score: ' + Math.floor(score / 10) + '  |  High Score: ' + highScore, canvas.width / 2, canvas.height / 2);
+
+        // Restart Button UI
+        ctx.fillStyle = '#ff0055';
+        ctx.beginPath();
+        ctx.roundRect(canvas.width / 2 - 90, canvas.height / 2 + 30, 180, 45, 10);
+        ctx.fill();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('PLAY AGAIN', canvas.width / 2, canvas.height / 2 + 58);
+        ctx.textAlign = 'left';
       }
     }
 
+    // Main Game Loop
     function loop() {
       update();
       draw();
