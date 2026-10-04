@@ -1,207 +1,674 @@
-<!-- ... existing code ... -->
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background-color: #050510;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        user-select: none;
-        touch-action: none;
-      }
-<!-- ... existing code ... -->
-        <div id="missionBanner" class="bg-yellow-500/20 border border-yellow-400/50 backdrop-blur-md px-4 py-2 rounded-xl flex items-center justify-between shadow-lg max-w-md w-full transition-all duration-300">
-          <div class="flex items-center space-x-3 overflow-hidden pr-2">
-            <span class="text-xl">🎯</span>
-            <div class="truncate">
-              <div class="text-[10px] uppercase tracking-wider text-yellow-300 font-bold">Current Mission</div>
-              <div id="missionDesc" class="text-xs sm:text-sm text-yellow-100 font-medium truncate">Collect 5 Coins</div>
-            </div>
-          </div>
-          <div class="flex items-center space-x-2 shrink-0">
-            <div id="missionProgress" class="text-xs font-bold text-yellow-300 bg-yellow-900/40 px-2.5 py-1 rounded-lg border border-yellow-500/30">
-              0/5
-            </div>
-            <button id="claimRewardBtn" onclick="claimMissionReward()" class="hidden bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-black font-extrabold text-xs px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(245,158,11,0.6)] animate-bounce cursor-pointer active:scale-95 transition-all">
-              CLAIM (+10 🪙)
-            </button>
-          </div>
-        </div>
-      </div>
-<!-- ... existing code ... -->
-    <script>
-      let scene, camera, renderer;
-      let player, playerBody;
-      let playerShipId = 'ship1';
-      let playerColor = 0x00f0ff;
-      
-      let coins = 0;
-      let score = 0;
-      let highScore = 0;
-      let gameActive = false;
-      let gameTime = 0;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Dodge Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #0d0e15;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      touch-action: manipulation;
+      overflow: hidden;
+    }
+    #mission-banner {
+      background: #161925;
+      border: 1px solid #ffd700;
+      color: #ffd700;
+      padding: 6px 14px;
+      font-size: 13px;
+      border-radius: 15px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #claimBtn {
+      display: none;
+      background: #ffd700;
+      color: #000;
+      border: none;
+      padding: 3px 8px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.08); }
+    }
+    #ui-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: center;
+    }
+    .top-btn {
+      padding: 8px 12px;
+      background: #1d2130;
+      color: #00f0ff;
+      border: 1px solid #00f0ff;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    #adBtn {
+      background: #ff0055;
+      color: #fff;
+      border: none;
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+    }
+    #gameContainer {
+      position: relative;
+    }
+    canvas {
+      background: #161925;
+      border: 2px solid #00f0ff;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      max-width: 95vw;
+      max-height: 55vh;
+      display: block;
+    }
+    #overlayScreen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(13, 14, 21, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      z-index: 10;
+    }
+    #startBtn {
+      background: #00f0ff;
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      font-size: 22px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00f0ff;
+    }
+    #shopModal {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(13, 14, 21, 0.95);
+      border: 2px solid #00f0ff;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      width: 330px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+      z-index: 100;
+    }
+    .shop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .shop-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+    .shop-card {
+      background: #161925;
+      border: 1px solid #00f0ff;
+      border-radius: 6px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .buy-btn {
+      padding: 4px 10px;
+      background: #00f0ff;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    #controls {
+      margin-top: 12px;
+      display: flex;
+      gap: 15px;
+    }
+    .btn {
+      background: #00f0ff;
+      color: #000;
+      border: none;
+      padding: 15px 35px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 8px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
+</head>
+<body>
 
-      // Mission System State
-      const MISSION_TYPES = [
-        { type: 'coins', title: 'Collect Coins', targetBase: 5, reward: 10 },
-        { type: 'survive', title: 'Survive Seconds', targetBase: 25, reward: 15 },
-        { type: 'score', title: 'Reach Score', targetBase: 150, reward: 20 }
-      ];
+  <div id="mission-banner">
+    🎯 <span id="missionText">Collect 5 Coins</span>
+    <button id="claimBtn">CLAIM (+10 🪙)</button>
+  </div>
 
-      let currentMission = {
-        type: 'coins',
-        target: 5,
-        progress: 0,
-        reward: 10,
-        completed: false,
-        claimed: false
-      };
+  <div id="ui-bar">
+    <button class="top-btn" id="soundBtn">🎧 Audio: OFF</button>
+    <button class="top-btn" id="pauseBtn">⏸️ Pause</button>
+    <button class="top-btn" id="shopBtn">🚀 Hangar</button>
+    <button class="top-btn" id="adBtn">📺 Watch Ad (+5 🪙)</button>
+  </div>
 
-      function generateNewMission() {
-        const typeObj = MISSION_TYPES[Math.floor(Math.random() * MISSION_TYPES.length)];
-        let target = typeObj.targetBase;
-        
-        if (typeObj.type === 'coins') {
-          target = Math.floor(Math.random() * 5 + 1) * 3; // e.g. 3, 6, 9, 12, 15
-        } else if (typeObj.type === 'survive') {
-          target = Math.floor(Math.random() * 4 + 2) * 10; // e.g. 20, 30, 40, 50
-        } else if (typeObj.type === 'score') {
-          target = Math.floor(Math.random() * 5 + 2) * 100; // e.g. 200, 300, 400
-        }
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    
+    <div id="overlayScreen">
+      <h1 style="color: #00f0ff; margin-bottom: 10px;">SPACE DODGE</h1>
+      <button id="startBtn">START GAME</button>
+    </div>
+  </div>
 
-        currentMission = {
-          type: typeObj.type,
-          target: target,
-          progress: 0,
-          reward: Math.floor(target * 0.8) + 5,
-          completed: false,
-          claimed: false
-        };
+  <div id="controls">
+    <button class="btn" id="leftBtn">👈 Left</button>
+    <button class="btn" id="rightBtn">Right 👉</button>
+  </div>
 
-        updateMissionUI();
-      }
+  <!-- Hangar Shop Popup -->
+  <div id="shopModal">
+    <div class="shop-header">
+      <h3>🚀 Starship Hangar</h3>
+      <button class="top-btn" style="padding: 4px 8px;" onclick="toggleShop()">✖ Close</button>
+    </div>
+    <p style="margin-bottom: 10px; color: #ffd700;">Coins: <span id="shopCoins">0</span> 🪙</p>
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
 
-      function updateMissionProgress(type, amount) {
-        if (currentMission.completed || currentMission.claimed) return;
+  <audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=cyberpunk-2099-10701.mp3"></audio>
 
-        if (currentMission.type === type) {
-          if (type === 'survive' || type === 'score') {
-            currentMission.progress = Math.min(amount, currentMission.target);
-          } else {
-            currentMission.progress += amount;
-          }
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const bgMusic = document.getElementById('bgMusic');
+    const soundBtn = document.getElementById('soundBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const adBtn = document.getElementById('adBtn');
+    const shopModal = document.getElementById('shopModal');
+    const overlayScreen = document.getElementById('overlayScreen');
+    const startBtn = document.getElementById('startBtn');
+    const claimBtn = document.getElementById('claimBtn');
 
-          if (currentMission.progress >= currentMission.target) {
-            currentMission.progress = currentMission.target;
-            currentMission.completed = true;
-            playRewardAvailableSound();
-          }
-          updateMissionUI();
-        }
-      }
+    // Safe LocalStorage getters
+    function getStoredInt(key, def) {
+      try {
+        const val = localStorage.getItem(key);
+        return val !== null ? parseInt(val, 10) : def;
+      } catch(e) { return def; }
+    }
+    function setStored(key, val) {
+      try { localStorage.setItem(key, val); } catch(e) {}
+    }
 
-      function updateMissionUI() {
-        const descEl = document.getElementById('missionDesc');
-        const progEl = document.getElementById('missionProgress');
-        const claimBtn = document.getElementById('claimRewardBtn');
+    let highScore = getStoredInt('space_dodge_highscore', 0);
+    let coins = getStoredInt('space_dodge_coins', 0);
 
-        if (!descEl || !progEl || !claimBtn) return;
+    let gameStarted = false;
+    let gameOver = false;
+    let isPaused = false;
+    let musicPlaying = false;
 
-        let label = '';
-        if (currentMission.type === 'coins') label = `Collect ${currentMission.target} Coins`;
-        if (currentMission.type === 'survive') label = `Survive ${currentMission.target} Seconds`;
-        if (currentMission.type === 'score') label = `Reach ${currentMission.target} Score`;
+    let player = { x: 180, y: 430, width: 36, height: 40, speed: 5, shipIndex: 0 };
+    let obstacles = [];
+    let coinItems = [];
+    let powerups = [];
+    let particles = [];
+    let score = 0;
+    let moveLeft = false;
+    let moveRight = false;
 
-        descEl.textContent = label;
+    let hasShield = false;
+    let magnetActive = false;
+    let magnetTimer = 0;
 
-        if (currentMission.completed && !currentMission.claimed) {
-          progEl.classList.add('hidden');
-          claimBtn.classList.remove('hidden');
-          claimBtn.textContent = `CLAIM (+${currentMission.reward} 🪙)`;
-        } else {
-          progEl.classList.remove('hidden');
-          claimBtn.classList.add('hidden');
-          progEl.textContent = `${Math.floor(currentMission.progress)}/${currentMission.target}`;
-        }
-      }
+    // Mission System
+    let currentMission = null;
+    let missionProgress = 0;
+    let missionReady = false;
 
-      function claimMissionReward() {
-        if (!currentMission.completed || currentMission.claimed) return;
+    const missionsList = [
+      { text: "Collect 5 Coins", goal: 5, reward: 10, type: "coins" },
+      { text: "Survive 30 Seconds", goal: 30, reward: 15, type: "time" },
+      { text: "Reach Score 500", goal: 500, reward: 20, type: "score" }
+    ];
 
-        currentMission.claimed = true;
+    function initMission() {
+      currentMission = missionsList[Math.floor(Math.random() * missionsList.length)];
+      missionProgress = 0;
+      missionReady = false;
+      claimBtn.style.display = 'none';
+      document.getElementById('missionText').textContent = `${currentMission.text} (0/${currentMission.goal})`;
+    }
+    initMission();
+
+    claimBtn.addEventListener('click', () => {
+      if (missionReady) {
         coins += currentMission.reward;
-        updateCoinDisplay();
-        playClaimRewardSound();
+        setStored('space_dodge_coins', coins);
+        updateShopUI();
+        initMission();
+      }
+    });
 
-        // Visual flash effect on coin counters
-        const coinDisplays = document.querySelectorAll('#coinCount, #menuCoins');
-        coinDisplays.forEach(el => {
-          el.classList.add('scale-125', 'text-yellow-300');
-          setTimeout(() => el.classList.remove('scale-125', 'text-yellow-300'), 300);
+    // 20 Ship Definitions
+    const shipCatalog = [
+      { name: "Cyan Dart", price: 0, color: "#00f0ff", type: 0 },
+      { name: "Crimson Viper", price: 10, color: "#ff0055", type: 1 },
+      { name: "Gold Rocket", price: 20, color: "#ffd700", type: 2 },
+      { name: "Cyber Violet", price: 30, color: "#a855f7", type: 0 },
+      { name: "Emerald Flare", price: 40, color: "#10b981", type: 1 },
+      { name: "Solar Flare", price: 50, color: "#f97316", type: 2 },
+      { name: "Void Spectre", price: 60, color: "#6366f1", type: 0 },
+      { name: "Plasma Cruiser", price: 75, color: "#ec4899", type: 1 },
+      { name: "Apex Blade", price: 90, color: "#06b6d4", type: 2 },
+      { name: "Neon Phantom", price: 100, color: "#f43f5e", type: 0 },
+      { name: "Shadow Reaper", price: 120, color: "#8b5cf6", type: 1 },
+      { name: "Thunderbird", price: 150, color: "#eab308", type: 2 },
+      { name: "Hyperion", price: 180, color: "#3b82f6", type: 0 },
+      { name: "Valkyrie", price: 200, color: "#d946ef", type: 1 },
+      { name: "Titan Interceptor", price: 250, color: "#f43f5e", type: 2 },
+      { name: "Quantum Saucer", price: 300, color: "#14b8a6", type: 0 },
+      { name: "Starlight Destroyer", price: 400, color: "#facc15", type: 1 },
+      { name: "Supernova", price: 500, color: "#fb923c", type: 2 },
+      { name: "Galaxy Sovereign", price: 750, color: "#c084fc", type: 0 },
+      { name: "Omega Dreadnought", price: 1000, color: "#e11d48", type: 1 }
+    ];
+
+    let ownedSkins = [0];
+
+    function renderShop() {
+      const grid = document.getElementById('shopGrid');
+      grid.innerHTML = '';
+      shipCatalog.forEach((ship, idx) => {
+        const card = document.createElement('div');
+        card.className = 'shop-card';
+        const isOwned = ownedSkins.includes(idx);
+        const isEquipped = player.shipIndex === idx;
+
+        card.innerHTML = `
+          <strong style="font-size:12px; color:${ship.color}">${ship.name}</strong>
+          <button class="buy-btn" id="shipBtn_${idx}">${isEquipped ? 'Equipped' : (isOwned ? 'Equip' : ship.price + ' 🪙')}</button>
+        `;
+        grid.appendChild(card);
+
+        document.getElementById(`shipBtn_${idx}`).addEventListener('click', () => {
+          if (ownedSkins.includes(idx)) {
+            player.shipIndex = idx;
+            renderShop();
+          } else if (coins >= ship.price) {
+            coins -= ship.price;
+            ownedSkins.push(idx);
+            player.shipIndex = idx;
+            setStored('space_dodge_coins', coins);
+            updateShopUI();
+            renderShop();
+          } else {
+            alert("Not enough coins!");
+          }
+        });
+      });
+    }
+
+    function toggleShop() {
+      shopModal.style.display = shopModal.style.display === 'block' ? 'none' : 'block';
+      updateShopUI();
+      if (shopModal.style.display === 'block') renderShop();
+    }
+    document.getElementById('shopBtn').addEventListener('click', toggleShop);
+
+    function updateShopUI() {
+      document.getElementById('shopCoins').textContent = coins;
+    }
+
+    // Controls & Audio
+    soundBtn.addEventListener('click', () => {
+      if (!musicPlaying) {
+        bgMusic.play().catch(() => {});
+        soundBtn.textContent = '🎧 Audio: ON';
+        musicPlaying = true;
+      } else {
+        bgMusic.pause();
+        soundBtn.textContent = '🎧 Audio: OFF';
+        musicPlaying = false;
+      }
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      if (!gameStarted || gameOver) return;
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? '▶ Resume' : '⏸️ Pause';
+    });
+
+    adBtn.addEventListener('click', () => {
+      alert("📺 Watching Ad... (+5 Coins added!)");
+      coins += 5;
+      setStored('space_dodge_coins', coins);
+      updateShopUI();
+    });
+
+    startBtn.addEventListener('click', () => {
+      overlayScreen.style.display = 'none';
+      gameStarted = true;
+      restartGame();
+    });
+
+    function restartGame() {
+      player.x = 180;
+      obstacles = [];
+      coinItems = [];
+      powerups = [];
+      particles = [];
+      score = 0;
+      hasShield = false;
+      magnetActive = false;
+      gameOver = false;
+      isPaused = false;
+      pauseBtn.textContent = '⏸️ Pause';
+      if (musicPlaying) bgMusic.play().catch(() => {});
+    }
+
+    // Input Handling
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') moveRight = true;
+      if (gameOver && e.key === ' ') restartGame();
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') moveLeft = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') moveRight = false;
+    });
+
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+
+    const startLeft = (e) => { e.preventDefault(); moveLeft = true; };
+    const stopLeft = (e) => { e.preventDefault(); moveLeft = false; };
+    const startRight = (e) => { e.preventDefault(); moveRight = true; };
+    const stopRight = (e) => { e.preventDefault(); moveRight = false; };
+
+    leftBtn.addEventListener('touchstart', startLeft);
+    leftBtn.addEventListener('touchend', stopLeft);
+    leftBtn.addEventListener('mousedown', startLeft);
+    leftBtn.addEventListener('mouseup', stopLeft);
+
+    rightBtn.addEventListener('touchstart', startRight);
+    rightBtn.addEventListener('touchend', stopRight);
+    rightBtn.addEventListener('mousedown', startRight);
+    rightBtn.addEventListener('mouseup', stopRight);
+
+    canvas.addEventListener('click', () => {
+      if (gameOver) restartGame();
+    });
+
+    // Drawing Vector Ships
+    function drawShip(x, y, shipIdx) {
+      const ship = shipCatalog[shipIdx] || shipCatalog[0];
+      ctx.save();
+      ctx.translate(x + 18, y + 20);
+
+      ctx.fillStyle = ship.color;
+      ctx.beginPath();
+      if (ship.type === 0) { // Dart
+        ctx.moveTo(0, -18);
+        ctx.lineTo(16, 16);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-16, 16);
+      } else if (ship.type === 1) { // Viper
+        ctx.moveTo(0, -20);
+        ctx.lineTo(18, 10);
+        ctx.lineTo(10, 18);
+        ctx.lineTo(0, 12);
+        ctx.lineTo(-10, 18);
+        ctx.lineTo(-18, 10);
+      } else { // Rocket
+        ctx.moveTo(0, -20);
+        ctx.lineTo(10, -5);
+        ctx.lineTo(14, 18);
+        ctx.lineTo(-14, 18);
+        ctx.lineTo(-10, -5);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // Cockpit Glow
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(0, -4, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function spawnElements() {
+      let diff = Math.min(score / 3000, 1.5);
+      if (Math.random() < 0.03 + diff * 0.02) {
+        let size = Math.random() * 25 + 20;
+        obstacles.push({
+          x: Math.random() * (canvas.width - size),
+          y: -size,
+          width: size,
+          height: size,
+          speed: Math.random() * 3 + 2.5 + diff * 2
+        });
+      }
+      if (Math.random() < 0.015) {
+        coinItems.push({ x: Math.random() * (canvas.width - 20), y: -20, size: 16, speed: 2.5 });
+      }
+      if (Math.random() < 0.003) {
+        powerups.push({
+          x: Math.random() * (canvas.width - 24),
+          y: -24,
+          size: 20,
+          type: Math.random() < 0.5 ? 'shield' : 'magnet',
+          speed: 2
+        });
+      }
+    }
+
+    function updateMission(type, amount) {
+      if (missionReady || !currentMission) return;
+      if (currentMission.type === type) {
+        missionProgress += amount;
+        if (missionProgress >= currentMission.goal) {
+          missionProgress = currentMission.goal;
+          missionReady = true;
+          claimBtn.style.display = 'inline-block';
+        }
+        document.getElementById('missionText').textContent = `${currentMission.text} (${Math.floor(missionProgress)}/${currentMission.goal})`;
+      }
+    }
+
+    function update() {
+      if (!gameStarted || gameOver || isPaused) return;
+
+      if (moveLeft && player.x > 0) player.x -= player.speed;
+      if (moveRight && player.x < canvas.width - player.width) player.x += player.speed;
+
+      spawnElements();
+      updateMission('time', 1 / 60);
+      updateMission('score', 1 / 10);
+
+      // Coins
+      for (let i = coinItems.length - 1; i >= 0; i--) {
+        let c = coinItems[i];
+        if (magnetActive) {
+          c.x += ((player.x + 18) - c.x) * 0.08;
+          c.y += ((player.y + 20) - c.y) * 0.08;
+        } else {
+          c.y += c.speed;
+        }
+
+        if (
+          player.x < c.x + c.size &&
+          player.x + player.width > c.x &&
+          player.y < c.y + c.size &&
+          player.y + player.height > c.y
+        ) {
+          coins++;
+          updateMission('coins', 1);
+          setStored('space_dodge_coins', coins);
+          coinItems.splice(i, 1);
+          continue;
+        }
+        if (c.y > canvas.height) coinItems.splice(i, 1);
+      }
+
+      // Powerups
+      for (let i = powerups.length - 1; i >= 0; i--) {
+        let p = powerups[i];
+        p.y += p.speed;
+        if (
+          player.x < p.x + p.size &&
+          player.x + player.width > p.x &&
+          player.y < p.y + p.size &&
+          player.y + player.height > p.y
+        ) {
+          if (p.type === 'shield') hasShield = true;
+          if (p.type === 'magnet') { magnetActive = true; magnetTimer = 300; }
+          powerups.splice(i, 1);
+          continue;
+        }
+        if (p.y > canvas.height) powerups.splice(i, 1);
+      }
+
+      // Obstacles
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        let obs = obstacles[i];
+        obs.y += obs.speed;
+
+        if (
+          player.x < obs.x + obs.width &&
+          player.x + player.width > obs.x &&
+          player.y < obs.y + obs.height &&
+          player.y + player.height > obs.y
+        ) {
+          if (hasShield) {
+            hasShield = false;
+            obstacles.splice(i, 1);
+            continue;
+          }
+          gameOver = true;
+          bgMusic.pause();
+          if (Math.floor(score / 10) > highScore) {
+            highScore = Math.floor(score / 10);
+            setStored('space_dodge_highscore', highScore);
+          }
+        }
+        if (obs.y > canvas.height) obstacles.splice(i, 1);
+      }
+
+      score++;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (gameStarted) {
+        // Player Ship
+        drawShip(player.x, player.y, player.shipIndex);
+
+        if (hasShield) {
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(player.x + 18, player.y + 20, 26, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Obstacles (Red Alien Ships)
+        ctx.fillStyle = '#ff0055';
+        obstacles.forEach(obs => {
+          ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
         });
 
-        // Generate next mission after claiming
-        generateNewMission();
-      }
+        // Coins
+        ctx.fillStyle = '#ffd700';
+        coinItems.forEach(c => {
+          ctx.beginPath();
+          ctx.arc(c.x + c.size / 2, c.y + c.size / 2, c.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        });
 
-      function playRewardAvailableSound() {
-        try {
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-          osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
-          gain.gain.setValueAtTime(0.1, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.3);
-        } catch (e) {}
-      }
+        // Power-ups
+        powerups.forEach(p => {
+          ctx.fillStyle = p.type === 'shield' ? '#00f0ff' : '#a855f7';
+          ctx.font = '16px sans-serif';
+          ctx.fillText(p.type === 'shield' ? '🛡️' : '🧲', p.x, p.y + 16);
+        });
 
-      function playClaimRewardSound() {
-        try {
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-          notes.forEach((freq, idx) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.15, ctx.currentTime + idx * 0.06);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.06 + 0.2);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(ctx.currentTime + idx * 0.06);
-            osc.stop(ctx.currentTime + idx * 0.06 + 0.2);
-          });
-        } catch (e) {}
-      }
-<!-- ... existing code ... -->
-      function collectCoin(coinObj) {
-        coins++;
-        updateCoinDisplay();
-        updateMissionProgress('coins', 1);
-        playCoinSound();
-        createCoinParticles(coinObj.position);
-      }
+        // HUD Stats
+        ctx.fillStyle = '#fff';
+        ctx.font = '14px sans-serif';
+        ctx.fillText('Score: ' + Math.floor(score / 10), 10, 22);
+        ctx.fillText('Best: ' + highScore, 10, 40);
 
-      function updateGame(delta) {
-        if (!gameActive) return;
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('Coins: ' + coins + ' 🪙', canvas.width - 110, 22);
 
-        gameTime += delta;
-        score += delta * 10;
-        
-        // Track survival and score mission progress continuous updates
-        updateMissionProgress('survive', Math.floor(gameTime));
-        updateMissionProgress('score', Math.floor(score));
-
-        document.getElementById('scoreDisplay').textContent = Math.floor(score);
-<!-- ... existing code ... -->
-      window.onload = function() {
-        initThreeJS();
-        generateNewMission();
-        // ... existing initialization code ...
+        if (gameOver) {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ff0055';
+          ctx.font = '30px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
+          ctx.fillStyle = '#fff';
+          ctx.font = '16px sans-serif';
+          ctx.fillText('Score: ' + Math.floor(score / 10) + ' | Best: ' + highScore, canvas.width / 2, canvas.height / 2 + 10);
+          ctx.fillStyle = '#00f0ff';
+          ctx.fillText('Tap Screen to Restart', canvas.width / 2, canvas.height / 2 + 50);
+          ctx.textAlign = 'left';
+        }
       }
-<!-- ... existing code ... -->
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>
